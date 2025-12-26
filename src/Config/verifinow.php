@@ -18,7 +18,7 @@ return [
 
     'webhook_secret' => env('VERIFINOW_WEBHOOK_SECRET', ''),
 
-    'timeout' => env('VERIFINOW_TIMEOUT', 30),
+    'timeout' => (int) env('VERIFINOW_TIMEOUT', 30),
 
     'register_routes' => env('VERIFINOW_REGISTER_ROUTES', true),
 

@@ -39,7 +39,7 @@ class VerifyNowService
             'base_uri' => $this->baseUrl,
             'timeout' => $this->timeout,
             'headers' => [
-                'Authorization' => "Bearer {$this->apiKey}",
+                'api-key' => $this->apiKey,
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ],
