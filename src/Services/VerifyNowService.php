@@ -1,0 +1,174 @@
+<?php
+
+declare(strict_types=1);
+
+namespace VerifyNow\Laravel\Services;
+
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use VerifyNow\Laravel\Exceptions\VerifyNowException;
+use VerifyNow\Laravel\Exceptions\UnauthorizedException;
+use VerifyNow\Laravel\Exceptions\InvalidRequestException;
+use Illuminate\Support\Facades\Log;
+
+/**
+ * Core VerifyNow API Service
+ *
+ * Handles HTTP communication with the VerifyNow API
+ */
+class VerifyNowService
+{
+    /**
+     * HTTP Client instance
+     */
+    private Client $client;
+
+    /**
+     * Constructor
+     *
+     * @param string $apiKey VerifyNow API Key
+     * @param string $baseUrl VerifyNow base URL
+     * @param int $timeout Request timeout in seconds
+     */
+    public function __construct(
+        private string $apiKey,
+        private string $baseUrl,
+        private int $timeout = 30
+    ) {
+        $this->client = new Client([
+            'base_uri' => $this->baseUrl,
+            'timeout' => $this->timeout,
+            'headers' => [
+                'Authorization' => "Bearer {$this->apiKey}",
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ],
+        ]);
+    }
+
+    /**
+     * Make a POST request to the VerifyNow API
+     *
+     * @param string $endpoint API endpoint
+     * @param array<string, mixed> $data Request data
+     * @return array<string, mixed> API response
+     *
+     * @throws VerifyNowException
+     */
+    public function post(string $endpoint, array $data = []): array
+    {
+        try {
+            $response = $this->client->post($endpoint, [
+                'json' => $data,
+            ]);
+
+            $body = json_decode($response->getBody()->getContents(), true);
+
+            Log::channel(config('verifinow.log_channel'))->info(
+                "VerifyNow API POST request to {$endpoint}",
+                ['response' => $body]
+            );
+
+            return $body ?? [];
+        } catch (GuzzleException $e) {
+            return $this->handleException($e, $endpoint);
+        }
+    }
+
+    /**
+     * Make a GET request to the VerifyNow API
+     *
+     * @param string $endpoint API endpoint
+     * @param array<string, mixed> $query Query parameters
+     * @return array<string, mixed> API response
+     *
+     * @throws VerifyNowException
+     */
+    public function get(string $endpoint, array $query = []): array
+    {
+        try {
+            $response = $this->client->get($endpoint, [
+                'query' => $query,
+            ]);
+
+            $body = json_decode($response->getBody()->getContents(), true);
+
+            Log::channel(config('verifinow.log_channel'))->info(
+                "VerifyNow API GET request to {$endpoint}",
+                ['response' => $body]
+            );
+
+            return $body ?? [];
+        } catch (GuzzleException $e) {
+            return $this->handleException($e, $endpoint);
+        }
+    }
+
+    /**
+     * Request IDV Verification
+     *
+     * @param array<string, mixed> $data IDV request data
+     * @return array<string, mixed> API response
+     *
+     * @throws VerifyNowException
+     */
+    public function requestIDV(array $data): array
+    {
+        return $this->post('/api/ask-idv', $data);
+    }
+
+    /**
+     * Request Authentication (Facial Recognition)
+     *
+     * @param array<string, mixed> $data Authentication request data
+     * @return array<string, mixed> API response
+     *
+     * @throws VerifyNowException
+     */
+    public function requestAuthentication(array $data): array
+    {
+        return $this->post('/api/ask-authentication', $data);
+    }
+
+    /**
+     * Check Verification Status
+     *
+     * @param string $verificationId Verification ID
+     * @return array<string, mixed> API response
+     *
+     * @throws VerifyNowException
+     */
+    public function checkVerificationStatus(string $verificationId): array
+    {
+        return $this->get("/api/verification/{$verificationId}");
+    }
+
+    /**
+     * Handle API exceptions
+     *
+     * @param GuzzleException $exception The exception from Guzzle
+     * @param string $endpoint The API endpoint
+     * @return array<string, mixed>
+     *
+     * @throws VerifyNowException
+     */
+    private function handleException(GuzzleException $exception, string $endpoint): array
+    {
+        $statusCode = $exception->getResponse()?->getStatusCode() ?? 500;
+        $body = json_decode(
+            $exception->getResponse()?->getBody()->getContents() ?? '{}',
+            true
+        );
+
+        Log::channel(config('verifinow.log_channel'))->error(
+            "VerifyNow API error at {$endpoint}",
+            ['status' => $statusCode, 'body' => $body, 'message' => $exception->getMessage()]
+        );
+
+        match ($statusCode) {
+            401 => throw new UnauthorizedException('Invalid API key or unauthorized access'),
+            422 => throw new InvalidRequestException($body['message'] ?? 'Invalid request'),
+            default => throw new VerifyNowException($body['message'] ?? 'API request failed', $statusCode),
+        };
+    }
+}
