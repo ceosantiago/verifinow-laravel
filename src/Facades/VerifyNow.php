@@ -15,6 +15,7 @@ use VerifyNow\Laravel\Services\VerifyNowService;
  * @method static array requestIDV(array $data)
  * @method static array requestAuthentication(array $data)
  * @method static array checkVerificationStatus(string $verificationId)
+ * @method static array checkIDVResults(string $longId)
  *
  * @see \VerifyNow\Laravel\Services\VerifyNowService
  */
