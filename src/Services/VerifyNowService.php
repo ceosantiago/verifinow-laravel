@@ -94,7 +94,6 @@ class VerifyNowService
 
             $body = json_decode($response->getBody()->getContents(), true);
 
-            \Sentry\captureMessage("VerifyNow API GET request to {$endpoint}", \Sentry\Severity::info());
 
             Log::channel(config('verifinow.log_channel'))->info(
                 "VerifyNow API GET request to {$endpoint}",
@@ -163,7 +162,6 @@ class VerifyNowService
 
         // Log full URL for debugging (avoids double slashes from base_uri + path)
         $fullUrl = rtrim($this->baseUrl, '/').$endpoint.'?'.http_build_query($query);
-        \Sentry\captureMessage("VerifyNow checkIDVResults -> {$fullUrl}", \Sentry\Severity::info());
 
         return $this->get($endpoint, $query);
     }
