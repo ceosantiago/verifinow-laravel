@@ -155,7 +155,7 @@ class VerifyNowService
      */
     public function checkIDVResults(string $longId, string $formType = 'IDV'): array
     {
-        return $this->get("/api/check-idv/{$longId}", ['formType' => $formType]);
+        return $this->get("/api/check-idv/{$longId}?formType={$formType}");
     }
 
     /**
