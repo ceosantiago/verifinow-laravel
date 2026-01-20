@@ -10,6 +10,7 @@ use VerifyNow\Laravel\Exceptions\VerifyNowException;
 use VerifyNow\Laravel\Exceptions\UnauthorizedException;
 use VerifyNow\Laravel\Exceptions\InvalidRequestException;
 use Illuminate\Support\Facades\Log;
+use Sentry\Laravel\Features\Storage\SentryCloudFilesystem;
 
 /**
  * Core VerifyNow API Service
@@ -93,6 +94,8 @@ class VerifyNowService
 
             $body = json_decode($response->getBody()->getContents(), true);
 
+            \Sentry\captureMessage("VerifyNow API GET request to {$endpoint}", \Sentry\Severity::info());
+
             Log::channel(config('verifinow.log_channel'))->info(
                 "VerifyNow API GET request to {$endpoint}",
                 ['response' => $body]
@@ -155,7 +158,11 @@ class VerifyNowService
      */
     public function checkIDVResults(string $longId, string $formType = 'IDV'): array
     {
-        return $this->get("/api/check-idv/{$longId}?formType={$formType}");
+        $url = "/api/check-idv/{$longId}?formType={$formType}";
+        
+        \Sentry\captureMessage($url, \Sentry\Severity::info());
+
+        return $this->get($url);
     }
 
     /**
