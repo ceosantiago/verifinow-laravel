@@ -158,11 +158,14 @@ class VerifyNowService
      */
     public function checkIDVResults(string $longId, string $formType = 'IDV'): array
     {
-        $url = "/api/check-idv/{$longId}?formType={$formType}";
-        
-        \Sentry\captureMessage($url, \Sentry\Severity::info());
+        $endpoint = "/api/check-idv/{$longId}";
+        $query = ['formType' => $formType];
 
-        return $this->get($url);
+        // Log full URL for debugging (avoids double slashes from base_uri + path)
+        $fullUrl = rtrim($this->baseUrl, '/').$endpoint.'?'.http_build_query($query);
+        \Sentry\captureMessage("VerifyNow checkIDVResults -> {$fullUrl}", \Sentry\Severity::info());
+
+        return $this->get($endpoint, $query);
     }
 
     /**
