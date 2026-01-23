@@ -120,6 +120,21 @@ class VerifyNowService
     }
 
     /**
+     * Request IDV Verification
+     *
+     * @param array<string, mixed> $data IDV request data
+     * @return array<string, mixed> API response
+     *
+     * @throws VerifyNowException
+     */
+    public function requestIDV2(array $data): array
+    {
+        return $this->post('/api/askIDV', $data);
+    }
+
+
+
+    /**
      * Request Authentication (Facial Recognition)
      *
      * @param array<string, mixed> $data Authentication request data
